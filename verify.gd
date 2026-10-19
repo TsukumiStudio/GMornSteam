@@ -1,9 +1,6 @@
 extends SceneTree
 
-## 拡張が無い側での約束を固定する。
-##
-## 拡張は配布形態によって有無が変わる。無い側で落ちると、書き出した後の環境で
-## だけ起動しなくなる。ここで見るのは「無くても必ず答える」ことである。
+## Steam 拡張が無い環境でも落ちず、必ず答えることを保証する。
 
 const STEAM_PATH := "res://addons/gmorn_steam/gmorn_steam.gd"
 const SETTINGS_PATH := "res://addons/gmorn_steam/gmorn_steam_settings.gd"
@@ -23,18 +20,16 @@ func _run() -> void:
 		assert(service.user_id.is_empty(), "識別子が %s" % service.user_id)
 		assert(service.persona_name.is_empty(), "表示名が %s" % service.persona_name)
 
-	# 不活性なら保存先を分けない。分けると、拡張の有無で保存先が変わって
-	# それまでの進行が見えなくなる。
+	# 不活性なら保存先を分けない。
 	if not service.active:
 		assert(service.save_subdirectory().is_empty(),
 			"不活性なのに %s へ分けている" % service.save_subdirectory())
 
-	# 実績の通知は不活性でも落ちない。呼んでも何も起きないだけ。
+	# 実績の通知は不活性でも落ちない。
 	service.unlock_achievement("TEST_ACHIEVEMENT")
 	service.unlock_achievement("")
 
-	# 活性側の経路は、拡張の無い環境では一度も通らない。値を差し替えて通す。
-	# ここを通していないと、Steam版でだけ保存先が壊れていても気付けない。
+	# 活性側の経路は拡張の無い環境では通らないので、値を差し替えて通す。
 	var kept_active: bool = service.active
 	var kept_user: String = service.user_id
 	service.active = true
@@ -42,11 +37,11 @@ func _run() -> void:
 	assert(service.save_subdirectory() == "steam/76561190000000000",
 		"利用者ごとの置き場が %s" % service.save_subdirectory())
 
-	# 識別子が取れないときは分けない。空のまま分けると全員が同じ場所を使う。
+	# 識別子が取れないときは分けない。
 	service.user_id = ""
 	assert(service.save_subdirectory().is_empty(), "識別子が無いのに分けている")
 
-	# 活性でも実績の呼び出しで落ちない。拡張が無いので何も起きないだけ。
+	# 活性でも拡張が無ければ実績の呼び出しで落ちない。
 	service.user_id = kept_user
 	service.unlock_achievement("TEST_ACHIEVEMENT")
 	service.active = kept_active
